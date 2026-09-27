@@ -185,7 +185,10 @@ export function calculateMileage(fuelLogs: FuelLog[]): number {
 /**
  * Compute scheduled maintenance alarms
  */
-export function getMaintenanceAlarms(currentOdometer: number): MaintenanceAlarm[] {
+export function getMaintenanceAlarms(
+  currentOdometer: number,
+  lastServicedMap?: Record<string, number>
+): MaintenanceAlarm[] {
   const intervals = [
     { serviceName: "Chain Lubrication & Inspection", intervalKm: 1000 },
     { serviceName: "Engine Oil Replacement", intervalKm: 3000 },
@@ -194,8 +197,13 @@ export function getMaintenanceAlarms(currentOdometer: number): MaintenanceAlarm[
   ];
 
   return intervals.map((item) => {
-    const kmSinceLast = currentOdometer % item.intervalKm;
-    const remaining = item.intervalKm - kmSinceLast;
+    const lastServiced = lastServicedMap?.[item.serviceName];
+    const kmSinceLast =
+      lastServiced !== undefined && lastServiced >= 0
+        ? Math.max(0, currentOdometer - lastServiced)
+        : currentOdometer % item.intervalKm;
+
+    const remaining = Math.max(0, item.intervalKm - (kmSinceLast % item.intervalKm));
     return {
       serviceName: item.serviceName,
       intervalKm: item.intervalKm,

@@ -385,6 +385,28 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
                         </div>
                       )}
 
+                      {splitMode === "adjustment" && (
+                        <div className="flex items-center gap-1">
+                          <span className="text-[10px] text-[#535D4D] font-bold">+/- ₹</span>
+                          <input
+                            type="number"
+                            step="1"
+                            placeholder="0"
+                            value={input.adjustment ? input.adjustment / 100 : ""}
+                            onChange={(e) =>
+                              setSplitInputs((prev) => ({
+                                ...prev,
+                                [member.id]: {
+                                  ...prev[member.id],
+                                  adjustment: toPaise(e.target.value),
+                                },
+                              }))
+                            }
+                            className="w-16 px-2 py-1 rounded-lg bg-[#EAE2D6] border border-[#DDD4C6] text-right font-bold text-xs"
+                          />
+                        </div>
+                      )}
+
                       {/* Computed Amount Display */}
                       <span className="font-bold tabular-nums text-[#1C241B]">
                         {formatCurrency(split?.amount || 0, currency)}

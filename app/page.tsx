@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -194,37 +194,99 @@ export default function HomePage() {
     },
   ]);
 
-  // Financial Calculations
-  const memberBalances: MemberBalance[] = [
-    { userId: "user-alex", name: "Alex", amountPaise: -31250 }, // you owe Alex
-    { userId: "user-brian", name: "Brian", amountPaise: 13750 }, // Brian owes you
-    { userId: "user-chloe", name: "Chloe", amountPaise: 13750 }, // Chloe owes you
-  ];
+  // Settlements State
+  const [settlements, setSettlements] = useState<
+    Array<{ id: string; payerId: string; payeeId: string; amountPaise: number }>
+  >([]);
 
-  const totalOwedToYou = 27500; // ₹275.00
-  const totalYouOwe = 31250; // ₹312.50
+  // Dynamic Member Names Map
+  const memberNames: Record<string, string> = useMemo(() => {
+    const map: Record<string, string> = {};
+    group.members.forEach((m) => {
+      map[m.id] = m.name;
+    });
+    return map;
+  }, [group.members]);
+
+  // Dynamic Pairwise Member Balances
+  const memberBalances: MemberBalance[] = useMemo(() => {
+    return group.members
+      .filter((m) => m.id !== currentUserId)
+      .map((member) => {
+        let balance = 0;
+
+        // Calculate from expenses
+        for (const exp of expenses) {
+          const payerId = exp.paidById || (exp.paidByName.includes("Sir") ? "user-me" : "user-alex");
+          if (payerId === currentUserId) {
+            const split = exp.splits.find((s) => s.userId === member.id);
+            if (split) balance += split.amountPaise;
+          } else if (payerId === member.id) {
+            const split = exp.splits.find((s) => s.userId === currentUserId);
+            if (split) balance -= split.amountPaise;
+          }
+        }
+
+        // Calculate from settlements
+        for (const set of settlements) {
+          if (set.payerId === currentUserId && set.payeeId === member.id) {
+            balance += set.amountPaise;
+          } else if (set.payerId === member.id && set.payeeId === currentUserId) {
+            balance -= set.amountPaise;
+          }
+        }
+
+        return {
+          userId: member.id,
+          name: member.name,
+          amountPaise: balance,
+        };
+      });
+  }, [group.members, expenses, settlements, currentUserId]);
+
+  const totalOwedToYou = useMemo(() => {
+    return memberBalances
+      .filter((m) => m.amountPaise > 0)
+      .reduce((sum, m) => sum + m.amountPaise, 0);
+  }, [memberBalances]);
+
+  const totalYouOwe = useMemo(() => {
+    return memberBalances
+      .filter((m) => m.amountPaise < 0)
+      .reduce((sum, m) => sum + Math.abs(m.amountPaise), 0);
+  }, [memberBalances]);
+
   const netBalancePaise = totalOwedToYou - totalYouOwe;
 
-  const netBalanceMap = new Map<string, number>([
-    ["user-me", netBalancePaise],
-    ["user-alex", 31250],
-    ["user-brian", -13750],
-    ["user-chloe", -13750],
-  ]);
+  // Dynamic Net Balances Map across all members for Min-Cash-Flow Simplification
+  const netBalanceMap = useMemo(() => {
+    const map = new Map<string, number>();
+    group.members.forEach((m) => map.set(m.id, 0));
 
-  const simplifiedTransactions: SimplifiedTransaction[] = simplifyDebts(netBalanceMap);
+    for (const exp of expenses) {
+      const payerId = exp.paidById || (exp.paidByName.includes("Sir") ? "user-me" : "user-alex");
+      map.set(payerId, (map.get(payerId) || 0) + exp.amountPaise);
+      for (const s of exp.splits) {
+        map.set(s.userId, (map.get(s.userId) || 0) - s.amountPaise);
+      }
+    }
 
-  const memberNames: Record<string, string> = {
-    "user-me": "Sir (You)",
-    "user-alex": "Alex",
-    "user-brian": "Brian",
-    "user-chloe": "Chloe",
-  };
+    for (const set of settlements) {
+      map.set(set.payerId, (map.get(set.payerId) || 0) + set.amountPaise);
+      map.set(set.payeeId, (map.get(set.payeeId) || 0) - set.amountPaise);
+    }
+
+    return map;
+  }, [group.members, expenses, settlements]);
+
+  const simplifiedTransactions: SimplifiedTransaction[] = useMemo(() => {
+    return simplifyDebts(netBalanceMap);
+  }, [netBalanceMap]);
 
   // Live Widget Data
   const widgetData: WidgetData = {
     netBalancePaise,
-    pendingDebtsCount: 3,
+    pendingDebtsCount: memberBalances.filter((m) => m.amountPaise !== 0).length,
     bikeName: bike.name,
     bikeOdometer: bike.currentOdometer,
     bikeStatus: bike.status,
@@ -245,6 +307,7 @@ export default function HomePage() {
       category: newExp.category,
       amountPaise: newExp.amountPaise,
       currency: newExp.currency,
+      paidById: newExp.paidById,
       paidByName: memberNames[newExp.paidById] || "Unknown",
       expenseDate: newExp.expenseDate,
       splitMode: newExp.splitMode,
@@ -352,14 +415,28 @@ export default function HomePage() {
   // Settle Up Submit
   const handleSettleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const amt = settleTarget.amountPaise || 31250;
+    const targetId = settleTarget.userId || "user-alex";
+
+    // Record settlement in dynamic ledger
+    setSettlements((prev) => [
+      ...prev,
+      {
+        id: `set-${Date.now()}`,
+        payerId: currentUserId,
+        payeeId: targetId,
+        amountPaise: amt,
+      },
+    ]);
+
     setIsSettleModalOpen(false);
     setActivities([
       {
         id: `act-${Date.now()}`,
         type: "settlement",
         title: "Settlement Voucher Sealed",
-        description: `Payment recorded via ${settleMethod}`,
-        amountPaise: settleTarget.amountPaise || 31250,
+        description: `Paid ${formatCurrency(amt)} to ${memberNames[targetId] || "Member"} via ${settleMethod}`,
+        amountPaise: amt,
         timestamp: "Just now",
       },
       ...activities,

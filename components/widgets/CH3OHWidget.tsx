@@ -30,6 +30,7 @@ interface CH3OHWidgetProps {
   variant?: WidgetVariant;
   data: WidgetData;
   className?: string;
+  onClick?: () => void;
 }
 
 export const CH3OHWidget: React.FC<CH3OHWidgetProps> = ({
@@ -37,6 +38,7 @@ export const CH3OHWidget: React.FC<CH3OHWidgetProps> = ({
   variant = "hybrid",
   data,
   className = "",
+  onClick,
 }) => {
   const isCreditor = data.netBalancePaise >= 0;
   const balanceColor = isCreditor ? "text-[#3F633B]" : "text-[#984A3B]";
@@ -47,6 +49,7 @@ export const CH3OHWidget: React.FC<CH3OHWidgetProps> = ({
     return (
       <motion.div
         whileTap={{ scale: 0.98 }}
+        onClick={onClick}
         className={`inline-flex items-center gap-3 px-3.5 py-1.5 rounded-full bg-[#EAE2D6] border border-[#DDD4C6]/80 shadow-xs select-none ${className}`}
       >
         <div className="flex items-center gap-1.5">

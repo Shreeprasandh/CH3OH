@@ -20,6 +20,7 @@ export interface ExpenseItem {
   amountPaise: number;
   currency: string;
   paidByName: string;
+  paidById?: string;
   expenseDate: string;
   splitMode: string;
   splits: Array<{
