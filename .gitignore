@@ -11,6 +11,7 @@ build/
 dist/
 web-build/
 *_legacy/
+supabase/.temp/
 
 # Environment secrets
 .env
