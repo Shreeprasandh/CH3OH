@@ -3,11 +3,14 @@ node_modules/
 .pnp
 .pnp.js
 
-# Next.js build
+# Next.js & Expo build
 .next/
+.expo/
 out/
 build/
 dist/
+web-build/
+*_legacy/
 
 # Environment secrets
 .env

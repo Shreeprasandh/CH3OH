@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Fuel,
   Coffee,
@@ -13,19 +14,21 @@ import {
   HeartPulse,
   Wrench,
   Receipt,
-  LucideIcon,
-} from "lucide-react";
+  LucideProps,
+} from "lucide-react-native";
+
+export type IconComponentType = React.FC<LucideProps>;
 
 export interface CategoryMatch {
   category: string;
   iconName: string;
-  IconComponent: LucideIcon;
+  IconComponent: IconComponentType;
 }
 
 const KEYWORD_MAP: Array<{
   category: string;
   iconName: string;
-  IconComponent: LucideIcon;
+  IconComponent: IconComponentType;
   keywords: string[];
 }> = [
   {
@@ -115,7 +118,7 @@ const KEYWORD_MAP: Array<{
 ];
 
 /**
- * Match expense title dynamically to category and Lucide icon
+ * Match expense title dynamically to category and Lucide icon for React Native
  */
 export function matchCategoryFromTitle(title: string): CategoryMatch {
   if (!title || !title.trim()) {

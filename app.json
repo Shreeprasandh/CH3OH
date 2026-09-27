@@ -1,0 +1,65 @@
+{
+  "expo": {
+    "name": "CH3OH",
+    "slug": "ch3oh",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "ch3oh",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FBF9F5"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.shreeprasandh.ch3oh"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#FBF9F5"
+      },
+      "package": "com.shreeprasandh.ch3oh",
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FBF9F5",
+          "image": "./assets/images/splash.png",
+          "imageWidth": 120
+        }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "QuickExpenseWidget",
+              "label": "CH3OH Quick Split",
+              "minWidth": "60dp",
+              "minHeight": "60dp",
+              "description": "Tactile balance glance and quick expense launcher",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "BikeStatusWidget",
+              "label": "CH3OH Bike Telemetry",
+              "minWidth": "120dp",
+              "minHeight": "60dp",
+              "description": "Anti-tamper odometer status & handover trigger",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
